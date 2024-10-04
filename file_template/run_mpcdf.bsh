@@ -1,0 +1,32 @@
+#!/bin/bash 
+## ============= mpcdf ===================
+#SBATCH --job-name=${simname}
+#SBATCH --partition=${partition}
+#SBATCH --nodes=${n_node}
+#SBATCH --ntasks=${n_cpu}
+#SBATCH --cpus-per-task=${n_thread}
+#SBATCH --mem=${mem}
+#SBATCH --time=${run_hour}:00:00
+#SBATCH --error=slurm-%j.stderr
+#SBATCH --output=slurm-%j.stdout
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=y.hu@mpie.de
+
+DAMASK="${damask_bin}"
+
+module load gcc openmpi cmake
+
+WORK_DIR="${workdir}"
+
+### run sim ###
+cd ${WORK_DIR}
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+srun $DAMASK -g ${fn_geom} -l ${fn_load} -m ${fn_material} \
+             -n numerics.yaml > run.log 2> err.log
+
+### simple post-process ###
+# source ~/DAMASK_yi/env/DAMASK.sh
+# analyze_micro.py full ${fn_hdf} 
+# short_log=$(tail -n 100 run.log)
+# echo "=== Last 100 lines of run.log ===" >> slurm-$SLURM_JOB_ID.stdout
+# echo "$short_log" >> slurm-$SLURM_JOB_ID.stdout
